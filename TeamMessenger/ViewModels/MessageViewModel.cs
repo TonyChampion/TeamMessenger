@@ -54,7 +54,7 @@ namespace TeamMessenger.ViewModels
         private async void RegisterUser()
         {
             if(!App.SessionManager.IsHost) 
-                await App.SessionManager.SendMessage(App.SessionManager.CurrentUser,
+                await App.SessionManager.SendMessage("user", App.SessionManager.CurrentUser,
                                                         App.SessionManager.Host);
         }
 
@@ -67,7 +67,7 @@ namespace TeamMessenger.ViewModels
                 Message = NewMessage
             };
 
-            await App.SessionManager.BroadCastMessage(msg);
+            await App.SessionManager.BroadCastMessage("message", msg);
 
             NewMessage = "";
             MessageAdded(this, null);

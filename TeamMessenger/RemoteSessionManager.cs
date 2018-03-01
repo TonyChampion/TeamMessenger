@@ -135,9 +135,40 @@ namespace TeamMessenger
             _messageChannel.ValueSetReceived += OnValueSetReceived;
         }
 
+        private object DeserializeMessage(ValueSet valueSet)
+        {
+            Type serialType;
+            object data;
+
+            if(valueSet.ContainsKey("user"))
+            {
+                serialType = typeof(User);
+                data = valueSet["user"];
+
+            } else if (valueSet.ContainsKey("users"))
+            {
+                serialType = typeof(List<User>);
+                data = valueSet["users"];
+
+            } else
+            {
+                serialType = typeof(UserMessage);
+                data = valueSet["message"];
+            }
+
+            object value;
+
+            using (var stream = new MemoryStream((byte[])data))
+            {
+                value = new DataContractJsonSerializer(serialType).ReadObject(stream);
+            }
+
+            return value;
+        }
         private async void OnValueSetReceived(RemoteSystemSessionMessageChannel sender, RemoteSystemSessionValueSetReceivedEventArgs args)
         {
-            var data = args.Message["data"];
+
+            var data = DeserializeMessage(args.Message);
 
             if (data is User)
             {
@@ -151,7 +182,7 @@ namespace TeamMessenger
                         () => { Users.Add(user); });
                 }
 
-                await BroadCastMessage(Users.ToList());
+                await BroadCastMessage("users", Users.ToList());
             }
             else if (data is List<User>)
             {
@@ -218,7 +249,7 @@ namespace TeamMessenger
             return status;
         }
 
-        public async Task<bool> BroadCastMessage(object message)
+        public async Task<bool> BroadCastMessage(string key, object message)
         {
             using (var stream = new MemoryStream())
             {
@@ -226,23 +257,22 @@ namespace TeamMessenger
                 byte[] data = stream.ToArray();
 
                 ValueSet msg = new ValueSet();
-                msg.Add("msg", data);
+                msg.Add(key, data);
                 await _messageChannel.BroadcastValueSetAsync(msg);
             }
 
             return true;
         }
 
-        public async Task<bool> SendMessage(object message, RemoteSystemSessionParticipant participant)
+        public async Task<bool> SendMessage(string key, object message, RemoteSystemSessionParticipant participant)
         {
-
             using (var stream = new MemoryStream())
             {
                 new DataContractJsonSerializer(message.GetType()).WriteObject(stream, message);
                 byte[] data = stream.ToArray();
 
                 ValueSet msg = new ValueSet();
-                msg.Add("msg", data);
+                msg.Add(key, data);
                 await _messageChannel.SendValueSetAsync(msg, participant);
             }
 

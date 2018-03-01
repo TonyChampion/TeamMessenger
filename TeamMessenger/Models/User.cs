@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Serialization;
 using Windows.UI.Xaml.Media;
 
 namespace TeamMessenger.Models
