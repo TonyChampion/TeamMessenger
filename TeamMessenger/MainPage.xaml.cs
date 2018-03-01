@@ -39,7 +39,7 @@ namespace TeamMessenger
 
         private void ViewModel_SessionConnected(object sender, EventArgs e)
         {
-          //  Frame.Navigate(typeof(MessagePage));
+            Frame.Navigate(typeof(MessagePage));
 
         }
 

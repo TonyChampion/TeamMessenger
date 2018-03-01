@@ -37,7 +37,7 @@
                     Content="Join Session"/>
 
         <ListView ItemsSource="{x:Bind ViewModel.Sessions}" 
-                  SelectedItem="{x:Bind ViewModel.SelectedSession}"
+                  SelectedItem="{x:Bind ViewModel.SelectedSession, Mode=TwoWay}"
                   IsItemClickEnabled="True"
                   Height="200"
                   BorderBrush="LightGray"

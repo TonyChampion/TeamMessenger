@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
 using Windows.Foundation.Collections;
 using Windows.System.RemoteSystems;
 
@@ -42,14 +44,22 @@ namespace TeamMessenger
         public event EventHandler<RemoteSystemSessionParticipant> ParticipantRemoved = delegate { };
 
         public bool IsHost { get; private set; }
+        public RemoteSystemSessionParticipant CurrentUser { get; private set; }
 
-        private void OnJoinRequested(RemoteSystemSessionController sender, RemoteSystemSessionJoinRequestedEventArgs args)
+        public ObservableCollection<RemoteSystemSessionParticipant> Participants { get; } = new ObservableCollection<RemoteSystemSessionParticipant>();
+
+        private async void OnJoinRequested(RemoteSystemSessionController sender, RemoteSystemSessionJoinRequestedEventArgs args)
         {
             var deferral = args.GetDeferral();
 
             args.JoinRequest.Accept();
             ParticipantJoined(this, args.JoinRequest.Participant);
-           
+
+            var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
+
+            await dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High,
+                () => { Participants.Add(args.JoinRequest.Participant); });
+            
             deferral.Complete();
         }
 
@@ -100,8 +110,23 @@ namespace TeamMessenger
         private void InitParticipantWatcher()
         {
             _participantWatcher = _currentSession.CreateParticipantWatcher();
-            _participantWatcher.Added += (s, e) => { ParticipantAdded(this, e.Participant); };
-            _participantWatcher.Removed += (s, e) => { ParticipantRemoved(this, e.Participant); };
+            _participantWatcher.Added += OnParticipantAdded;
+            _participantWatcher.Removed += OnParticipantRemoved;
+        }
+
+        private void OnParticipantAdded(RemoteSystemSessionParticipantWatcher watcher, RemoteSystemSessionParticipantAddedEventArgs args)
+        {
+            if(args.Participant.RemoteSystem.DisplayName == _currentSession.ControllerDisplayName)
+            {
+                _host = args.Participant;
+            }
+
+            ParticipantAdded(this, args.Participant);
+        }
+
+        private void OnParticipantRemoved(RemoteSystemSessionParticipantWatcher watcher, RemoteSystemSessionParticipantRemovedEventArgs args)
+        {
+            ParticipantRemoved(this, args.Participant);
         }
 
         public void StartReceivingMessages()
@@ -146,19 +171,7 @@ namespace TeamMessenger
             bool status = true;
 
             RemoteSystemSessionJoinResult joinResult = await session.JoinAsync();
-
-            var watcher = joinResult.Session.CreateParticipantWatcher();
-
-            watcher.Added += (sender, args) =>
-            {
-                if (args.Participant.RemoteSystem.DisplayName == _currentSession.ControllerDisplayName)
-                {
-                    _host = args.Participant;
-                }
-            };
-
-            watcher.Start();
-
+          
             if (joinResult.Status == RemoteSystemSessionJoinStatus.Success)
             {
                 _currentSession = joinResult.Session;

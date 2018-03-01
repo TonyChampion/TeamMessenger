@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
 using Windows.System.RemoteSystems;
 
 namespace TeamMessenger.ViewModels
@@ -21,18 +22,14 @@ namespace TeamMessenger.ViewModels
         {
             App.SessionManager.SessionAdded += SessionManager_SessionAdded;
             await App.SessionManager.DiscoverSessions();
-            App.SessionManager.ParticipantAdded += SessionManager_ParticipantAdded;
-
         }
 
-        private void SessionManager_ParticipantAdded(object sender, RemoteSystemSessionParticipant e)
+        private async void SessionManager_SessionAdded(object sender, RemoteSystemSessionInfo e)
         {
-            
-        }
+            var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
 
-        private void SessionManager_SessionAdded(object sender, RemoteSystemSessionInfo e)
-        {
-            Sessions.Add(e);
+            await dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High,
+                () => { Sessions.Add(e); });
         }
 
         public ObservableCollection<RemoteSystemSessionInfo> Sessions { get; } = new ObservableCollection<RemoteSystemSessionInfo>();
@@ -40,7 +37,7 @@ namespace TeamMessenger.ViewModels
 
         public string SessionName { get; set; }
 
-        public RemoteSystemSession SelectedSession { get; set; }
+        public object SelectedSession { get; set; }
         public async void Start()
         {
             if(IsNewSession)
@@ -55,7 +52,17 @@ namespace TeamMessenger.ViewModels
                 }
             } else
             {
-
+                if(SelectedSession != null && !String.IsNullOrEmpty(JoinName))
+                {
+                    var result = await App.SessionManager.JoinSession(SelectedSession as RemoteSystemSessionInfo, JoinName);
+                    if(result)
+                    {
+                        SessionConnected(this, null);
+                    } else
+                    {
+                        ErrorConnecting(this, SessionCreationResult.Failure);
+                    }
+                }
             }
         }
 

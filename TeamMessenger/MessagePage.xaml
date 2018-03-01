@@ -6,6 +6,7 @@
     xmlns:models="using:TeamMessenger.Models"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:remotesystems="using:Windows.System.RemoteSystems"
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -16,12 +17,12 @@
 
         <Grid VerticalAlignment="Stretch"
               BorderBrush="Gray" BorderThickness="0,0,1,0">
-            <ListView ItemsSource="{x:Bind ViewModel.Users}">
+            <ListView ItemsSource="{x:Bind ViewModel.Participants}">
                 <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="models:User">
+                    <DataTemplate x:DataType="remotesystems:RemoteSystemSessionParticipant">
                         <TextBlock Height="25"
                                    FontSize="16"
-                                   Text="{x:Bind DisplayName}"/>
+                                   Text="{x:Bind RemoteSystem.DisplayName}"/>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TeamMessenger.Models;
+using Windows.System.RemoteSystems;
 using Windows.UI;
 using Windows.UI.Xaml.Media;
 
@@ -19,7 +20,7 @@ namespace TeamMessenger.ViewModels
 
         public ObservableCollection<UserMessage> Messages { get; private set; }
 
-        public ObservableCollection<User> Users { get; private set; }
+        public ObservableCollection<RemoteSystemSessionParticipant> Participants { get; private set; }
 
         private string _newMessage;
         public string NewMessage {
@@ -33,42 +34,15 @@ namespace TeamMessenger.ViewModels
 
         public MessageViewModel()
         {
-            Users = new ObservableCollection<User>();
+            Participants = App.SessionManager.Participants;
+
             Messages = new ObservableCollection<UserMessage>();
 
-            Users.Add(new User() { DisplayName = "Tony Champion" });
-            Users.Add(new User() { DisplayName = "Shannon Champion" });
-
-            Messages.Add(new UserMessage() { User = Users.First(), Message = "This is a test message. This is a weird thigns...", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.Skip(1).First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.Skip(1).First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.Skip(1).First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.First(), Message = "This is a test message. This is a weird thigns...", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.Skip(1).First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.Skip(1).First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.Skip(1).First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.First(), Message = "This is a test message. This is a weird thigns...", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.Skip(1).First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.Skip(1).First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.Skip(1).First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.First(), Message = "This is a test message. This is a weird thigns...", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.Skip(1).First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.Skip(1).First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            Messages.Add(new UserMessage() { User = Users.Skip(1).First(), Message = "This is a test message.", DateTimeStamp = DateTime.Now });
-            MessageAdded(this, null);
         }
 
         public void SubmitMessage()
         {
-            Messages.Add(new UserMessage() { User = Users.First(), DateTimeStamp = DateTime.Now, Message = NewMessage });
+            //Messages.Add(new UserMessage() { User = Users.First(), DateTimeStamp = DateTime.Now, Message = NewMessage });
             NewMessage = "";
             MessageAdded(this, null);
         }
