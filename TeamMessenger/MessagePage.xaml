@@ -45,11 +45,11 @@
                                         Margin="20,5,0,0">
                                 <TextBlock Text="{x:Bind User.DisplayName}"
                                            FontSize="12"
-                                           Foreground="LightGray"/>
+                                           Foreground="Gray"/>
                                 <TextBlock Text="{x:Bind DateTimeStamp}"
                                            Margin="20,0,0,0"
                                            FontSize="12"
-                                           Foreground="LightGray"/>
+                                           Foreground="Gray"/>
                             </StackPanel>
                         </StackPanel>
                     </DataTemplate>
