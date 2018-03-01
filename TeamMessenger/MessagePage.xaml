@@ -17,12 +17,12 @@
 
         <Grid VerticalAlignment="Stretch"
               BorderBrush="Gray" BorderThickness="0,0,1,0">
-            <ListView ItemsSource="{x:Bind ViewModel.Participants}">
+            <ListView ItemsSource="{x:Bind ViewModel.Users}">
                 <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="remotesystems:RemoteSystemSessionParticipant">
+                    <DataTemplate x:DataType="models:User">
                         <TextBlock Height="25"
                                    FontSize="16"
-                                   Text="{x:Bind RemoteSystem.DisplayName}"/>
+                                   Text="{x:Bind DisplayName}"/>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>

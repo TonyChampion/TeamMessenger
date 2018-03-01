@@ -42,7 +42,7 @@ namespace TeamMessenger.ViewModels
         {
             if(IsNewSession)
             {
-                var result = await App.SessionManager.CreateSession(SessionName);
+                var result = await App.SessionManager.CreateSession(SessionName, JoinName);
                 if(result == SessionCreationResult.Success)
                 {
                     SessionConnected(this, null);

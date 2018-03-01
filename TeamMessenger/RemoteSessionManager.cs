@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading.Tasks;
+using TeamMessenger.Models;
 using Windows.ApplicationModel.Core;
 using Windows.Foundation.Collections;
 using Windows.System.RemoteSystems;
@@ -23,7 +24,7 @@ namespace TeamMessenger
     public class MessageReceivedEventArgs
     {
         public RemoteSystemSessionParticipant Participant { get; set; }
-        public string Message { get; set; }
+        public object Message { get; set; }
     }
 
     public class RemoteSessionManager
@@ -32,7 +33,6 @@ namespace TeamMessenger
         private RemoteSystemSession _currentSession;
         private RemoteSystemSessionWatcher _watcher;
         private RemoteSystemSessionMessageChannel _messageChannel;
-        private RemoteSystemSessionParticipant _host;
         private RemoteSystemSessionParticipantWatcher _participantWatcher;
 
         public event EventHandler<RemoteSystemSessionParticipant> ParticipantJoined = delegate { };
@@ -44,9 +44,10 @@ namespace TeamMessenger
         public event EventHandler<RemoteSystemSessionParticipant> ParticipantRemoved = delegate { };
 
         public bool IsHost { get; private set; }
-        public RemoteSystemSessionParticipant CurrentUser { get; private set; }
+        public User CurrentUser { get; private set; }
+        public RemoteSystemSessionParticipant Host { get; private set; }
 
-        public ObservableCollection<RemoteSystemSessionParticipant> Participants { get; } = new ObservableCollection<RemoteSystemSessionParticipant>();
+        public ObservableCollection<User> Users { get; } = new ObservableCollection<User>();
 
         private async void OnJoinRequested(RemoteSystemSessionController sender, RemoteSystemSessionJoinRequestedEventArgs args)
         {
@@ -55,15 +56,10 @@ namespace TeamMessenger
             args.JoinRequest.Accept();
             ParticipantJoined(this, args.JoinRequest.Participant);
 
-            var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
-
-            await dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High,
-                () => { Participants.Add(args.JoinRequest.Participant); });
-            
             deferral.Complete();
         }
 
-        public async Task<SessionCreationResult> CreateSession(string name)
+        public async Task<SessionCreationResult> CreateSession(string sessionName, string displayName)
         {
             SessionCreationResult status = SessionCreationResult.Success;
 
@@ -75,7 +71,7 @@ namespace TeamMessenger
 
             if (_controller == null)
             {
-                _controller = new RemoteSystemSessionController(name);
+                _controller = new RemoteSystemSessionController(sessionName);
                 _controller.JoinRequested += OnJoinRequested;
             }
 
@@ -93,6 +89,9 @@ namespace TeamMessenger
                 };
 
                 InitParticipantWatcher();
+
+                CurrentUser = new User() { Id = _currentSession.DisplayName, DisplayName = displayName };
+                Users.Add(CurrentUser);
 
                 IsHost = true;
             }
@@ -112,13 +111,14 @@ namespace TeamMessenger
             _participantWatcher = _currentSession.CreateParticipantWatcher();
             _participantWatcher.Added += OnParticipantAdded;
             _participantWatcher.Removed += OnParticipantRemoved;
+            _participantWatcher.Start();
         }
 
         private void OnParticipantAdded(RemoteSystemSessionParticipantWatcher watcher, RemoteSystemSessionParticipantAddedEventArgs args)
         {
             if(args.Participant.RemoteSystem.DisplayName == _currentSession.ControllerDisplayName)
             {
-                _host = args.Participant;
+                Host = args.Participant;
             }
 
             ParticipantAdded(this, args.Participant);
@@ -131,15 +131,46 @@ namespace TeamMessenger
 
         public void StartReceivingMessages()
         {
-            _messageChannel = new RemoteSystemSessionMessageChannel(_currentSession, "SessionActions");
+            _messageChannel = new RemoteSystemSessionMessageChannel(_currentSession, "OpenChannel");
             _messageChannel.ValueSetReceived += OnValueSetReceived;
         }
 
-        private void OnValueSetReceived(RemoteSystemSessionMessageChannel sender, RemoteSystemSessionValueSetReceivedEventArgs args)
+        private async void OnValueSetReceived(RemoteSystemSessionMessageChannel sender, RemoteSystemSessionValueSetReceivedEventArgs args)
         {
-            MessageReceived(this, new MessageReceivedEventArgs() {
-                Participant = args.Sender,
-                Message = args.Message["msg"].ToString() });
+            var data = args.Message["data"];
+
+            if (data is User)
+            {
+                var user = data as User;
+
+                if (!Users.Contains(user))
+                {
+                    var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
+
+                    await dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High,
+                        () => { Users.Add(user); });
+                }
+
+                await BroadCastMessage(Users.ToList());
+            }
+            else if (data is List<User>)
+            {
+                var users = data as List<User>;
+                Users.Clear();
+                foreach(var user in users)
+                {
+                    Users.Add(user);
+                }
+            }
+            else
+            {
+                MessageReceived(this, new MessageReceivedEventArgs()
+                {
+                    Participant = args.Sender,
+                    Message = data
+                });
+
+            }
         }
 
         public async Task<bool> DiscoverSessions()
@@ -175,16 +206,19 @@ namespace TeamMessenger
             if (joinResult.Status == RemoteSystemSessionJoinStatus.Success)
             {
                 _currentSession = joinResult.Session;
+                CurrentUser = new User() { Id = _currentSession.DisplayName, DisplayName = name };
             }
             else
             {
                 status = false;
             }
 
+            InitParticipantWatcher();
+
             return status;
         }
 
-        public async Task<bool> BroadCastMessage(string message)
+        public async Task<bool> BroadCastMessage(object message)
         {
             using (var stream = new MemoryStream())
             {
@@ -199,7 +233,7 @@ namespace TeamMessenger
             return true;
         }
 
-        public async Task<bool> SendMessage(object message)
+        public async Task<bool> SendMessage(object message, RemoteSystemSessionParticipant participant)
         {
 
             using (var stream = new MemoryStream())
@@ -208,8 +242,8 @@ namespace TeamMessenger
                 byte[] data = stream.ToArray();
 
                 ValueSet msg = new ValueSet();
-                msg.Add("Key", data);
-                await _messageChannel.SendValueSetAsync(msg, _host);
+                msg.Add("msg", data);
+                await _messageChannel.SendValueSetAsync(msg, participant);
             }
 
             return true;

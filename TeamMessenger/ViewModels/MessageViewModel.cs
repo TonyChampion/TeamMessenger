@@ -20,7 +20,7 @@ namespace TeamMessenger.ViewModels
 
         public ObservableCollection<UserMessage> Messages { get; private set; }
 
-        public ObservableCollection<RemoteSystemSessionParticipant> Participants { get; private set; }
+        public ObservableCollection<User> Users { get; private set; }
 
         private string _newMessage;
         public string NewMessage {
@@ -34,15 +34,41 @@ namespace TeamMessenger.ViewModels
 
         public MessageViewModel()
         {
-            Participants = App.SessionManager.Participants;
+            Users = App.SessionManager.Users;
 
             Messages = new ObservableCollection<UserMessage>();
-
+            App.SessionManager.StartReceivingMessages();
+            App.SessionManager.MessageReceived += OnMessageRecieved;
+            RegisterUser();
         }
 
-        public void SubmitMessage()
+        private void OnMessageRecieved(object sender, MessageReceivedEventArgs e)
         {
-            //Messages.Add(new UserMessage() { User = Users.First(), DateTimeStamp = DateTime.Now, Message = NewMessage });
+            if(e.Message is UserMessage)
+            {
+                Messages.Add(e.Message as UserMessage);
+                MessageAdded(this, null);
+            }
+        }
+
+        private async void RegisterUser()
+        {
+            if(!App.SessionManager.IsHost) 
+                await App.SessionManager.SendMessage(App.SessionManager.CurrentUser,
+                                                        App.SessionManager.Host);
+        }
+
+        public async void SubmitMessage()
+        {
+            var msg = new UserMessage()
+            {
+                User = App.SessionManager.CurrentUser,
+                DateTimeStamp = DateTime.Now,
+                Message = NewMessage
+            };
+
+            await App.SessionManager.BroadCastMessage(msg);
+
             NewMessage = "";
             MessageAdded(this, null);
         }
