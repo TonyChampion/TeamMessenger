@@ -124,8 +124,17 @@ namespace TeamMessenger
             ParticipantAdded(this, args.Participant);
         }
 
-        private void OnParticipantRemoved(RemoteSystemSessionParticipantWatcher watcher, RemoteSystemSessionParticipantRemovedEventArgs args)
+        private async void OnParticipantRemoved(RemoteSystemSessionParticipantWatcher watcher, RemoteSystemSessionParticipantRemovedEventArgs args)
         {
+            var qry = Users.Where(u => u.Id == args.Participant.RemoteSystem.DisplayName);
+            if(qry.Count() > 0)
+            {
+                var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
+
+                await dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High,
+                    () => { Users.Remove(qry.First()); });
+            }
+            
             ParticipantRemoved(this, args.Participant);
         }
 

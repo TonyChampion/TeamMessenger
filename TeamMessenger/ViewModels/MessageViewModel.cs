@@ -68,6 +68,7 @@ namespace TeamMessenger.ViewModels
             };
 
             await App.SessionManager.BroadCastMessage("message", msg);
+            Messages.Add(msg);
 
             NewMessage = "";
             MessageAdded(this, null);
