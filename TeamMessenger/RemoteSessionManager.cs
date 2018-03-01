@@ -90,7 +90,7 @@ namespace TeamMessenger
 
                 InitParticipantWatcher();
 
-                CurrentUser = new User() { Id = _currentSession.DisplayName, DisplayName = displayName };
+                CurrentUser = new User() { Id = _currentSession.ControllerDisplayName, DisplayName = displayName };
                 Users.Add(CurrentUser);
 
                 IsHost = true;
@@ -182,6 +182,7 @@ namespace TeamMessenger
             if (data is User)
             {
                 var user = data as User;
+                user.Id = args.Sender.RemoteSystem.DisplayName;
 
                 if (!Users.Contains(user))
                 {
@@ -246,7 +247,7 @@ namespace TeamMessenger
             if (joinResult.Status == RemoteSystemSessionJoinStatus.Success)
             {
                 _currentSession = joinResult.Session;
-                CurrentUser = new User() { Id = _currentSession.DisplayName, DisplayName = name };
+                CurrentUser = new User() { DisplayName = name };
             }
             else
             {
