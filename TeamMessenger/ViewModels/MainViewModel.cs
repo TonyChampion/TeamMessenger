@@ -20,11 +20,12 @@ namespace TeamMessenger.ViewModels
 
         private async Task InitSessionManager()
         {
-            App.SessionManager.SessionAdded += SessionManager_SessionAdded;
+            App.SessionManager.SessionAdded += OnSessionAdded;
+            App.SessionManager.SessionRemoved += OnSessionRemoved;
             await App.SessionManager.DiscoverSessions();
         }
 
-        private async void SessionManager_SessionAdded(object sender, RemoteSystemSessionInfo e)
+        private async void OnSessionAdded(object sender, RemoteSystemSessionInfo e)
         {
             var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
 
@@ -32,12 +33,25 @@ namespace TeamMessenger.ViewModels
                 () => { Sessions.Add(e); });
         }
 
-        public ObservableCollection<RemoteSystemSessionInfo> Sessions { get; } = new ObservableCollection<RemoteSystemSessionInfo>();
+        private async void OnSessionRemoved(object sender, RemoteSystemSessionInfo e)
+        {
+            if (Sessions.Contains(e))
+            {
+                var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
+
+                await dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High,
+                    () => { Sessions.Remove(e); });
+            }
+        }
+
         public string JoinName { get; set; }
 
         public string SessionName { get; set; }
 
         public object SelectedSession { get; set; }
+
+        public ObservableCollection<RemoteSystemSessionInfo> Sessions { get; } = new ObservableCollection<RemoteSystemSessionInfo>();
+
         public async void Start()
         {
             if(IsNewSession)
@@ -52,7 +66,7 @@ namespace TeamMessenger.ViewModels
                 }
             } else
             {
-                if(SelectedSession != null && !String.IsNullOrEmpty(JoinName))
+                if(SelectedSession != null)
                 {
                     var result = await App.SessionManager.JoinSession(SelectedSession as RemoteSystemSessionInfo, JoinName);
                     if(result)

@@ -14,33 +14,33 @@ namespace TeamMessenger.ViewModels
 {
     public class MessageViewModel : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged = delegate { };
-        public event EventHandler MessageAdded = delegate { };
+public event PropertyChangedEventHandler PropertyChanged = delegate { };
+public event EventHandler MessageAdded = delegate { };
 
 
-        public ObservableCollection<UserMessage> Messages { get; private set; }
+public ObservableCollection<UserMessage> Messages { get; private set; }
 
-        public ObservableCollection<User> Users { get; private set; }
+public ObservableCollection<User> Users { get; private set; }
 
-        private string _newMessage;
-        public string NewMessage {
-            get { return _newMessage; }
-            set
-            {
-                _newMessage = value;
-                PropertyChanged(this, new PropertyChangedEventArgs(nameof(NewMessage)));
-            }
-        }
+private string _newMessage;
+public string NewMessage {
+    get { return _newMessage; }
+    set
+    {
+        _newMessage = value;
+        PropertyChanged(this, new PropertyChangedEventArgs(nameof(NewMessage)));
+    }
+}
 
-        public MessageViewModel()
-        {
-            Users = App.SessionManager.Users;
+public MessageViewModel()
+{
+    Users = App.SessionManager.Users;
 
-            Messages = new ObservableCollection<UserMessage>();
-            App.SessionManager.StartReceivingMessages();
-            App.SessionManager.MessageReceived += OnMessageRecieved;
-            RegisterUser();
-        }
+    Messages = new ObservableCollection<UserMessage>();
+    App.SessionManager.StartReceivingMessages();
+    App.SessionManager.MessageReceived += OnMessageRecieved;
+    RegisterUser();
+}
 
         private void OnMessageRecieved(object sender, MessageReceivedEventArgs e)
         {
@@ -67,7 +67,7 @@ namespace TeamMessenger.ViewModels
                 Message = NewMessage
             };
 
-            await App.SessionManager.BroadCastMessage("message", msg);
+            await App.SessionManager.BroadcastMessage("message", msg);
             Messages.Add(msg);
 
             NewMessage = "";

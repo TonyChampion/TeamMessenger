@@ -26,10 +26,10 @@ namespace TeamMessenger
         public MessagePage()
         {
             this.InitializeComponent();
-            ViewModel.MessageAdded += ViewModel_MessageAdded;
+            ViewModel.MessageAdded += OnMessageAdded;
         }
 
-        private void ViewModel_MessageAdded(object sender, EventArgs e)
+        private void OnMessageAdded(object sender, EventArgs e)
         {
             lvMessages.ScrollIntoView(ViewModel.Messages.Last());
         }

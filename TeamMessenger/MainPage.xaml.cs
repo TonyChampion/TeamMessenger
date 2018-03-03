@@ -27,17 +27,17 @@ namespace TeamMessenger
         public MainPage()
         {
             this.InitializeComponent();
-            ViewModel.SessionConnected += ViewModel_SessionConnected;
-            ViewModel.ErrorConnecting += ViewModel_ErrorConnecting;
+            ViewModel.SessionConnected += OnSessionConnected;
+            ViewModel.ErrorConnecting += OnErrorConnecting;
         }
 
-        private async void ViewModel_ErrorConnecting(object sender, SessionCreationResult e)
+        private async void OnErrorConnecting(object sender, SessionCreationResult e)
         {
             var dialog = new MessageDialog("Error connecting to a session");
             await dialog.ShowAsync();
         }
 
-        private void ViewModel_SessionConnected(object sender, EventArgs e)
+        private void OnSessionConnected(object sender, EventArgs e)
         {
             Frame.Navigate(typeof(MessagePage));
 
